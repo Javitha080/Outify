@@ -16,6 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.version }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
       librespot_commit: ${{ steps.librespot_commit.outputs.commit }}
     steps:
       - name: Checkout repository with submodules
@@ -157,7 +158,6 @@ jobs:
       ANDROID_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
       ANDROID_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
       ANDROID_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-      VERSION_NAME: ${{ needs.setup.outputs.version }}
 
     steps:
       - uses: actions/checkout@v4
@@ -236,9 +236,6 @@ jobs:
   publish_release:
     runs-on: ubuntu-latest
     needs: [setup, android_build]
-    env:
-      VERSION_NAME: ${{ needs.setup.outputs.version }}
-      RELEASE_TAG: ${{ needs.setup.outputs.prerelease == 'true' && 'nightly' || needs.setup.outputs.version }}
     steps:
       - name: Ensure folders
         run: mkdir -p app/build/outputs/apk/release
@@ -252,9 +249,9 @@ jobs:
       - name: Publish Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ env.RELEASE_TAG }}
-          name: ${{ needs.setup.outputs.prerelease == 'true' && format('Nightly Build {0}', env.VERSION_NAME) || env.VERSION_NAME }}
-          prerelease: ${{ needs.setup.outputs.prerelease }}
+          tag_name: ${{ needs.setup.outputs.prerelease == 'true' && 'nightly' || needs.setup.outputs.version }}
+          name: ${{ needs.setup.outputs.prerelease == 'true' && format('Nightly Build {0}', needs.setup.outputs.version) || needs.setup.outputs.version }}
+          prerelease: ${{ needs.setup.outputs.prerelease == 'true' }}
           files: |
             app/build/outputs/apk/release/*.apk
           overwrite_files: true
