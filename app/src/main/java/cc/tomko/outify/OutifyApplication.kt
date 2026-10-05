@@ -19,6 +19,7 @@ import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -58,12 +59,12 @@ class OutifyApplication : Application() {
 
         appScope.launch {
             val id = try {
-                kotlinx.coroutines.flow.first(settingsRepository.clientId)
+                settingsRepository.clientId.first()
             } catch (_: Exception) {
                 null
             }
             val secret = try {
-                kotlinx.coroutines.flow.first(settingsRepository.clientSecret)
+                settingsRepository.clientSecret.first()
             } catch (_: Exception) {
                 null
             }

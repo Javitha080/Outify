@@ -72,7 +72,7 @@ class Metadata @Inject constructor(
 
     suspend fun getArtistMetadata(uri: String): Artist? {
         try {
-            val raw = nativeMetadata.getNativeMetadata(uri)
+            val raw = nativeMetadata.getNativeMetadata(uri) ?: return null
             if (raw.trimStart().startsWith("{\"error\"")) {
                 NativeErrorHandler.handleErrorJson(raw, "getArtistMetadata:$uri")
                 return null
