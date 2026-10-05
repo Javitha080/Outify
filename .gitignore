@@ -1,0 +1,38 @@
+# IDE
+.idea/
+*.iml
+.DS_Store
+
+# Gradle
+.gradle/
+**/build/
+
+# Android
+/captures
+.externalNativeBuild
+.cxx
+*.so
+# (CI rebuilds librespot .so files — keep them local only)
+app/src/main/jniLibs/
+
+# Local config
+local.properties
+
+# Signing keys - never commit
+*.keystore
+*.jks
+*.p12
+release.keystore
+app/release.keystore
+
+# Rust
+rust/**/target/
+rust/target/
+
+# Local tool caches
+.kotlin/
+.settings/
+
+# Unpacked reference sources - do not publish
+librespot-dev/
+Metrolist-main/

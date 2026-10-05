@@ -1,0 +1,3 @@
+[submodule "rust/deps/librespot"]
+	path = rust/deps/librespot
+	url = https://github.com/iTomKo/librespot

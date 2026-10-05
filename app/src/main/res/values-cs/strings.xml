@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="search_section_albums">Alba</string>
+    <string name="search_section_episodes">Epizody</string>
+    <string name="repeat_mode_one">Opakovat jednu</string>
+    <string name="repeat_mode_off">Neopakovat</string>
+    <string name="audio_playback_attribution">Tato aplikace přehrává audio</string>
+    <string name="media_notificationn_channel">Přehrávání zvuku</string>
+    <string name="media_notification_channel_description">Ovládání přehrávání</string>
+    <string name="search_section_tracks">Písně</string>
+    <string name="search_section_artists">Umělci</string>
+    <string name="search_section_playlists">Playlisty</string>
+    <string name="search_section_shows">Shows</string>
+    <string name="start_radio">Spustit rádio</string>
+    <string name="repeat_mode_all">Opakovat všechny</string>
+    <string name="like">Oblíbené</string>
+    <string name="outify_playback_widget_description">Rychlý způsob jak přehrát oblibené písně</string>
+</resources>

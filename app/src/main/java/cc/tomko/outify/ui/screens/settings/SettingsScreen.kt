@@ -1,0 +1,124 @@
+package cc.tomko.outify.ui.screens.settings
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.DeveloperMode
+import androidx.compose.material.icons.filled.Headphones
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Interests
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import cc.tomko.outify.ui.components.PreferenceEntry
+import cc.tomko.outify.ui.viewmodel.settings.SettingsViewModel
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SettingsScreen(
+    viewModel: SettingsViewModel,
+    onNavigateBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    openInterfaceSettings: (() -> Unit),
+    openPlaybackSettings: (() -> Unit),
+    openMiscSettings: (() -> Unit),
+    openAboutSettings: (() -> Unit),
+    openAccountSettings: (() -> Unit),
+) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Settings") },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                }
+            )
+        },
+        modifier = modifier
+    ) { innerPaddings ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = innerPaddings.calculateTopPadding())
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            item {
+                ElevatedCard(
+                    modifier = modifier
+                        .fillMaxWidth()
+                ) {
+                    PreferenceEntry(
+                        title = { Text("Interface") },
+                        description = "Gestures, Appearance, ..",
+                        icon = { Icon(Icons.Default.Interests, contentDescription = null) },
+                        onClick = openInterfaceSettings,
+                    )
+                }
+            }
+
+            item {
+                ElevatedCard(
+                    modifier = modifier
+                        .fillMaxWidth()
+                ) {
+                    PreferenceEntry(
+                        title = { Text("Playback") },
+                        description = "Bitrate, Spotify Connect, Gapless, ..",
+                        icon = { Icon(Icons.Default.Headphones, contentDescription = null) },
+                        onClick = openPlaybackSettings,
+                    )
+                }
+            }
+
+            item {
+                ElevatedCard(
+                    modifier = modifier
+                        .fillMaxWidth()
+                ) {
+                    PreferenceEntry(
+                        title = { Text("Misc") },
+                        description = "Sync, Backup & restore",
+                        icon = { Icon(Icons.Default.DeveloperMode, contentDescription = null) },
+                        onClick = openMiscSettings,
+                    )
+
+                    PreferenceEntry(
+                        title = { Text("About") },
+                        description = "Build number",
+                        icon = { Icon(Icons.Default.Info, contentDescription = null) },
+                        onClick = openAboutSettings,
+                    )
+                }
+            }
+
+            item {
+                ElevatedCard(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                ) {
+                    PreferenceEntry(
+                        title = { Text("Accounts") },
+                        description = "Playback & Account login",
+                        icon = { Icon(Icons.Default.AccountCircle, contentDescription = null) },
+                        onClick = openAccountSettings,
+                    )
+                }
+            }
+        }
+    }
+}

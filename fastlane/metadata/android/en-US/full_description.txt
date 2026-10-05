@@ -1,0 +1,7 @@
+! Spotify Premium required !
+
+Stream your tracks, manage your profile. Large customization options - featuring swipe gestures, monochrome images, dynamic themes.
+No tracking (Spotify may still collect streaming usage), ads.
+
+
+Features Material 3 design with performance in mind. Customizable gestures, widget, playback settings, ..

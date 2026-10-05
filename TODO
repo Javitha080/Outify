@@ -1,0 +1,7 @@
+[x] Implement https://developer.spotify.com/documentation/web-api/reference/start-a-users-playback and Player entire section for when we are not in Spirc mode.
+    - Implemented via Web API in rust/librespot-ffi/src/spotify/client/player.rs
+    - JNI bindings in rust/librespot-ffi/src/jni_impl/spclient.rs
+    - Kotlin externals in app/src/main/java/cc/tomko/outify/core/SpClient.kt
+    - NOTE: requires OAuth re-login to pick up the new user-modify-playback-state scope
+[x] Implement account logout
+[ ] Wire remote playback controls into the device picker UI (PlaybackDevicesViewModel)

@@ -1,0 +1,79 @@
+name: Bug report
+description: Report a bug with Outify
+title: "[Bug]: "
+labels: ['bug']
+body:
+    - type: markdown
+      attributes:
+          value: |
+              Thanks for taking the time to fill out this bug report! If this is a security issue, please report it to TomKo directly.
+
+    - type: textarea
+      attributes:
+          label: Description
+          description: Please write a brief description of the bug, including what you expect to happen and what is currently happening.
+          placeholder: |
+              Feature '...' is not working properly. I expect '...' to happen, but '...' happens instead
+      validations:
+          required: true
+
+    - type: input
+      attributes:
+          label: Android OS version
+          description: Please tell us what's your Android OS Version.
+          placeholder: |
+            Android 15
+      validations:
+          required: true
+
+    - type: textarea
+      attributes:
+          label: Step-by-step reproduction instructions
+          description: Please write the steps needed to reproduce the bug.
+          placeholder: |
+              1. Go to '...'
+              2. Click on '...'
+              3. Scroll down to '...'
+      validations:
+          required: true
+
+    - type: textarea
+      attributes:
+          label: Screenshots, screen recording, code snippet
+          description: |
+              If possible, please upload a screenshot or screen recording which demonstrates the bug.
+              Tip: You can attach images or log files by clicking this area to highlight it and then dragging files in.
+      validations:
+          required: false
+
+    - type: checkboxes
+      id: existing
+      attributes:
+          label: Please confirm that you are using Outify with Spotify Premium account
+          description: As stated in project's README, Outify requires Spotify Premium to work.
+          options:
+              - label: 'Yes'
+                required: true
+
+    - type: checkboxes
+      id: plugins
+      attributes:
+          label: Please confirm that you have tested clearing storage and cache and trying again.
+          description: Sometimes due to app updates data may be in weird state, this will resolve that.
+          options:
+              - label: 'Yes'
+                required: true
+
+    - type: checkboxes
+      id: playbacklogin
+      attributes:
+          label: Are you signed in using 'Playback login'?
+          options:
+              - label: 'Yes'
+
+    - type: checkboxes
+      id: accountlogin
+      attributes:
+          label: Are you signed in using 'Account login'?
+          options:
+              - label: 'Yes'

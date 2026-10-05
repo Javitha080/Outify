@@ -1,0 +1,256 @@
+name: Android Nightly
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      librespot_commit: ${{ steps.librespot_commit.outputs.commit }}
+    steps:
+      - name: Checkout repository with submodules
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Compute librespot commit
+        id: librespot_commit
+        run: |
+          echo "commit=$(git -C rust/deps/librespot rev-parse HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Generate version name
+        id: version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/}"
+            PRERELEASE=false
+          else
+            VERSION="nightly-$(date +'%Y.%m.%d')"
+            PRERELEASE=true
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "prerelease=$PRERELEASE" >> $GITHUB_OUTPUT
+
+      - name: Cache Cargo (librespot)
+        uses: actions/cache@v3
+        with:
+          path: |
+            rust/deps/librespot/target
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: librespot-rust-${{ runner.os }}-${{ steps.librespot_commit.outputs.commit }}-${{ hashFiles('rust/deps/librespot/Cargo.lock') }}
+          restore-keys: |
+            librespot-rust-${{ runner.os }}-${{ steps.librespot_commit.outputs.commit }}-
+            librespot-rust-${{ runner.os }}-
+
+      - name: Cache Gradle
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/gradle-wrapper.properties', '**/*.gradle*', 'settings.gradle*') }}
+
+  librespot_build:
+    runs-on: ubuntu-latest
+    needs: setup
+
+    strategy:
+      matrix:
+        include:
+          - abi: arm64-v8a
+            triple: aarch64-linux-android
+          - abi: armeabi-v7a
+            triple: armv7-linux-androideabi
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Restore Cargo cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            rust/target
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: librespot-rust-${{ runner.os }}-${{ needs.setup.outputs.librespot_commit }}-${{ matrix.abi }}
+          restore-keys: |
+            librespot-rust-${{ runner.os }}-${{ needs.setup.outputs.librespot_commit }}-
+            librespot-rust-${{ runner.os }}-
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-ndk
+        run: cargo install cargo-ndk
+
+      - name: Install Android NDK
+        id: ndk
+        run: |
+          NDK_VERSION="r29"
+          
+          # Try standard GitHub Actions location first
+          if [ -d "/opt/hostedtoolcache/ndk/r29/x64" ]; then
+            NDK_HOME="/opt/hostedtoolcache/ndk/r29/x64"
+            echo "Found NDK at GitHub Actions cache: $NDK_HOME"
+          else
+            # For local act or custom environments, download NDK
+            NDK_HOME="$HOME/android-ndk-${NDK_VERSION}"
+            
+            if [ ! -d "$NDK_HOME" ]; then
+              echo "Downloading Android NDK ${NDK_VERSION}..."
+              cd "$HOME"
+              wget -q https://dl.google.com/android/repository/android-ndk-${NDK_VERSION}-linux.zip
+              unzip -q android-ndk-${NDK_VERSION}-linux.zip
+              rm android-ndk-${NDK_VERSION}-linux.zip
+            else
+              echo "NDK already installed at: $NDK_HOME"
+            fi
+          fi
+          
+          echo "ndk-path=$NDK_HOME" >> $GITHUB_OUTPUT
+
+      - name: Export tool paths
+        run: |
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          echo "ANDROID_NDK_HOME=${{ steps.ndk.outputs.ndk-path }}" >> "$GITHUB_ENV"
+          echo "ANDROID_NDK=${{ steps.ndk.outputs.ndk-path }}" >> "$GITHUB_ENV"
+
+      - name: Install Rust Android targets
+        run: rustup target add ${{ matrix.triple }}
+
+      - name: Build librespot
+        working-directory: rust/librespot-ffi
+        run: |
+          cargo ndk -t ${{ matrix.abi }} --platform 21 build --release
+
+      - name: Upload ABI artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: librespot-${{ matrix.abi }}
+          path: rust/target/${{ matrix.triple }}/release/liblibrespot_ffi.so
+          if-no-files-found: error
+
+  android_build:
+    runs-on: ubuntu-latest
+    needs: [setup, librespot_build]
+    env:
+      ANDROID_KEYSTORE_FILE: app/release.keystore
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+      VERSION_NAME: ${{ needs.setup.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Downlaod arm64
+        uses: actions/download-artifact@v4
+        with:
+          name: librespot-arm64-v8a
+          path: app/src/main/jniLibs/arm64-v8a
+
+      - name: Download armeabi
+        uses: actions/download-artifact@v4
+        with:
+          name: librespot-armeabi-v7a
+          path: app/src/main/jniLibs/armeabi-v7a
+
+      - name: Verify .so files
+        run: |
+          ls -la app/src/main/jniLibs/arm64-v8a/ app/src/main/jniLibs/armeabi-v7a/
+          file app/src/main/jniLibs/arm64-v8a/liblibrespot_ffi.so
+          file app/src/main/jniLibs/armeabi-v7a/liblibrespot_ffi.so
+
+      - name: Decode Keystore
+        if: secrets.ANDROID_KEYSTORE_BASE64 != ''
+        run: |
+          mkdir -p "${{ github.workspace }}/app"
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > "${{ github.workspace }}/app/release.keystore"
+
+      - name: Verify keystore location
+        if: secrets.ANDROID_KEYSTORE_BASE64 != ''
+        run: ls -l "${{ github.workspace }}/app/release.keystore"
+
+      - name: Enable Gradle cache
+        run: |
+          mkdir -p ~/.gradle
+          echo "org.gradle.caching=true" >> ~/.gradle/gradle.properties
+          
+      - name: Cache Gradle
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.gradle/build-cache
+            ~/.android/build-cache
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/gradle-wrapper.properties', '**/*.gradle*', 'settings.gradle*') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v2
+
+      - name: Build signed release
+        env:
+          ANDROID_KEYSTORE_FILE: ${{ github.workspace }}/app/release.keystore
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: ./gradlew assembleRelease
+
+      - name: Upload APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightlies
+          path: app/build/outputs/apk/release/*.apk
+
+  publish_release:
+    runs-on: ubuntu-latest
+    needs: [setup, android_build]
+    env:
+      VERSION_NAME: ${{ needs.setup.outputs.version }}
+      RELEASE_TAG: ${{ needs.setup.outputs.prerelease == 'true' && 'nightly' || needs.setup.outputs.version }}
+    steps:
+      - name: Ensure folders
+        run: mkdir -p app/build/outputs/apk/release
+    
+      - name: Download APKs
+        uses: actions/download-artifact@v4
+        with:
+          name: nightlies
+          path: app/build/outputs/apk/release
+
+      - name: Publish Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: ${{ needs.setup.outputs.prerelease == 'true' && format('Nightly Build {0}', env.VERSION_NAME) || env.VERSION_NAME }}
+          prerelease: ${{ needs.setup.outputs.prerelease }}
+          files: |
+            app/build/outputs/apk/release/*.apk
+          overwrite_files: true
+          token: ${{ secrets.GITHUB_TOKEN }}
