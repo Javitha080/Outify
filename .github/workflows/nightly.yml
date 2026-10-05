@@ -132,6 +132,11 @@ jobs:
       - name: Install Rust Android targets
         run: rustup target add ${{ matrix.triple }}
 
+      - name: Apply Outify librespot patches
+        run: |
+          git -C rust/deps/librespot apply "${{ github.workspace }}/rust/patches/free-accounts.patch"
+          git -C rust/deps/librespot diff --stat
+
       - name: Build librespot
         working-directory: rust/librespot-ffi
         run: |

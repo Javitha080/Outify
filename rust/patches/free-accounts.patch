@@ -1,0 +1,33 @@
+diff --git a/core/src/session.rs b/core/src/session.rs
+index e20a8d7..283be10 100644
+--- a/core/src/session.rs
++++ b/core/src/session.rs
+@@ -404,11 +404,8 @@ impl Session {
+     fn check_catalogue(attributes: &UserAttributes) {
+         if let Some(account_type) = attributes.get("type") {
+             if account_type != "premium" {
+-                error!("librespot does not support {account_type:?} accounts.");
+-                info!("Please support Spotify and your artists and sign up for a premium account.");
+-
+-                // TODO: logout instead of exiting
+-                exit(1);
++                // Outify: Allow free accounts ΓÇö don't exit, just log
++                info!("Account type is {account_type:?}, treating as premium for Outify.");
+             }
+         }
+     }
+@@ -894,6 +891,14 @@ where
+                 trace!("Received product info: {user_attributes:#?}");
+                 Session::check_catalogue(&user_attributes);
+ 
++                // Outify: Override account type to premium for free accounts
++                user_attributes.insert("type".to_owned(), "premium".to_owned());
++                // Also ensure on-demand is enabled
++                user_attributes.insert("on-demand".to_owned(), "1".to_owned());
++                // Outify: Claim the premium catalogue so free-catalogue restrictions
++                // don't mark tracks unavailable during metadata resolution
++                user_attributes.insert("catalogue".to_owned(), "premium".to_owned());
++
+                 session
+                     .0
+                     .data

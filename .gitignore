@@ -2,6 +2,11 @@
 .idea/
 *.iml
 .DS_Store
+.classpath
+.cclasspath
+.project
+.projectt
+.settings/
 
 # Gradle
 .gradle/
@@ -14,6 +19,11 @@
 *.so
 # (CI rebuilds librespot .so files — keep them local only)
 app/src/main/jniLibs/
+
+# Local Eclipse / SDK artifacts
+app/lib/
+app/*.classpath
+app/*.project*
 
 # Local config
 local.properties
