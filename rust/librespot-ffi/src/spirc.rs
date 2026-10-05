@@ -694,3 +694,6 @@ where
     let guard = container.read().unwrap();
     let runtime = guard.as_ref().ok_or(SpircError::NotCreated)?;
 
+    Ok(f(runtime))
+}
+
