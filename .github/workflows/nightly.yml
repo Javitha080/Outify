@@ -184,13 +184,17 @@ jobs:
           file app/src/main/jniLibs/armeabi-v7a/liblibrespot_ffi.so
 
       - name: Decode Keystore
-        if: secrets.ANDROID_KEYSTORE_BASE64 != ''
+        if: env.ANDROID_KEYSTORE_BASE64 != ''
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
           mkdir -p "${{ github.workspace }}/app"
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > "${{ github.workspace }}/app/release.keystore"
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "${{ github.workspace }}/app/release.keystore"
 
       - name: Verify keystore location
-        if: secrets.ANDROID_KEYSTORE_BASE64 != ''
+        if: env.ANDROID_KEYSTORE_BASE64 != ''
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: ls -l "${{ github.workspace }}/app/release.keystore"
 
       - name: Enable Gradle cache
